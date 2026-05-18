@@ -54,9 +54,16 @@ var WIND = {
 var SEV = { blue: 1, yellow: 2, orange: 3, red: 4 };
 var LIGHT_ICON = { "红": "🔴", "黄": "🟡", "绿": "🟢" };
 
-function $(id) {
-  return document.getElementById(id);
-}
+function $(id) { return document.getElementById(id); }
+
+// ✅ 新增：场景-行为映射（只加这一段）
+var PLACE_ACTION_MAP = {
+  road: ["walk", "cross", "ride", "umbrella", "near_tree", "wait"],
+  school: ["walk", "umbrella", "near_tree", "window", "outdoor_activity"],
+  home: ["window"],
+  open_area: ["walk", "cross", "ride", "umbrella", "wait", "outdoor_activity"],
+  building_edge: ["walk", "cross", "ride", "umbrella", "near_tree", "wait"]
+};
 
 function hasClass(el, cls) {
   if (!el) return false;
@@ -718,6 +725,35 @@ function buildQuiz(level, place, action) {
         this.textContent = hasClass(box, "hide") ? "依据展开" : "收起依据";
       };
     }
+    // ✅ 新增：place → action 联动逻辑（只这一处）
+  (function () {
+    var placeEl = $("place");
+    var actionEl = $("action");
+    if (!placeEl || !actionEl) return;
+
+    function updateActions() {
+      var place = placeEl.value;
+      var allowed = PLACE_ACTION_MAP[place] || [];
+
+      for (var i = 0; i < actionEl.options.length; i++) {
+        var opt = actionEl.options[i];
+        opt.hidden = allowed.indexOf(opt.value) === -1;
+      }
+
+      var current = actionEl.value;
+      if (allowed.indexOf(current) === -1) {
+        for (var j = 0; j < actionEl.options.length; j++) {
+          if (!actionEl.options[j].hidden) {
+            actionEl.value = actionEl.options[j].value;
+            break;
+          }
+        }
+      }
+    }
+
+    placeEl.addEventListener("change", updateActions);
+    updateActions();
+  })();
   }
   
   if (document.readyState === "loading") {
@@ -725,4 +761,3 @@ function buildQuiz(level, place, action) {
   } else {
     bindAll();
   }
-  
